@@ -1212,13 +1212,18 @@ function doLibDrop(e){e.preventDefault();document.getElementById('lib-upz').clas
 
 function renderLibGrid(){
   const count=LIB_PHOTOS.length;
-  document.getElementById('lib-count').textContent=count?`${count} photo${count!==1?'s':''} in library — tap to select`:'';
+  const selCount=LIB_SELECTED.length;
+  if(selCount>0){
+    document.getElementById('lib-count').innerHTML=`<strong style="color:var(--gn)">${selCount} photo${selCount!==1?'s':''} selected</strong> — scroll down &amp; tap a slot to assign, or drag onto a slot`;
+  } else {
+    document.getElementById('lib-count').textContent=count?`${count} photo${count!==1?'s':''} in library — tap to select`:'';
+  }
   if(!count){document.getElementById('lib-grid').innerHTML='';return;}
   document.getElementById('lib-grid').innerHTML=LIB_PHOTOS.map((p,i)=>{
     const sel=LIB_SELECTED.includes(i);
     // Check if already assigned to an item
     const assignedTo=(CB&&CB.items||[]).findIndex(item=>(item.photos||[]).includes(p));
-    return`<div onclick="toggleLibPhoto(${i})" style="aspect-ratio:1;border-radius:6px;overflow:hidden;position:relative;cursor:pointer;border:2px solid ${sel?'var(--gn)':assignedTo>=0?'var(--am)':'var(--bor)'};transition:border .1s;">
+    return`<div onclick="toggleLibPhoto(${i})" draggable="true" ondragstart="libDragStart(event,${i})" ontouchstart="libTouchStart(event,${i})" data-libidx="${i}" style="aspect-ratio:1;border-radius:6px;overflow:hidden;position:relative;cursor:pointer;border:2px solid ${sel?'var(--gn)':assignedTo>=0?'var(--am)':'var(--bor)'};transition:border .1s;user-select:none;-webkit-user-select:none;">
       <img src="${p}" style="width:100%;height:100%;object-fit:cover;opacity:${sel?1:0.85};">
       ${sel?`<div style="position:absolute;top:2px;right:2px;background:var(--gn);border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;">✓</div>`:''}
       ${assignedTo>=0&&!sel?`<div style="position:absolute;top:2px;right:2px;background:var(--am);border-radius:10px;padding:0 4px;color:#fff;font-size:8px;font-weight:700;">#${assignedTo+1}</div>`:''}
@@ -1289,6 +1294,96 @@ async function assignToSlot(slotIdx){
   // Auto-analyze
   await analyzeSlot(slotIdx);
 }
+
+// ── Drag-and-drop: library photos → item slots ──────────────────────────────
+
+function libDragStart(e,photoIdx){
+  // If dragging an unselected photo, make it the sole selection
+  if(!LIB_SELECTED.includes(photoIdx)){LIB_SELECTED=[photoIdx];renderLibGrid();}
+  e.dataTransfer.setData('text/plain',JSON.stringify(LIB_SELECTED));
+  e.dataTransfer.effectAllowed='copy';
+}
+
+function slotDragOver(e,el){
+  e.preventDefault();
+  e.dataTransfer.dropEffect='copy';
+  el.style.borderColor='var(--gn)';
+  el.style.background='var(--gnl)';
+}
+
+function slotDragLeave(e,el){
+  // Only reset if we actually left the slot (not entered a child)
+  if(el.contains(e.relatedTarget))return;
+  el.style.borderColor=LIB_SELECTED.length>0?'var(--ac2)':'var(--bor)';
+  el.style.background='var(--sur2)';
+}
+
+function libDropToSlot(e,slotIdx){
+  e.preventDefault();
+  e.currentTarget.style.borderColor='';
+  e.currentTarget.style.background='';
+  try{const indices=JSON.parse(e.dataTransfer.getData('text/plain'));LIB_SELECTED=indices;}catch{}
+  assignToSlot(slotIdx);
+}
+
+// ── Touch drag: select photos, drag finger to slot ───────────────────────────
+
+let _TD=null; // active touch drag state
+
+function libTouchStart(e,photoIdx){
+  const t=e.touches[0];
+  _TD={photoIdx,x0:t.clientX,y0:t.clientY,moved:false,ghost:null};
+}
+
+document.addEventListener('touchmove',function(e){
+  if(!_TD)return;
+  const t=e.touches[0];
+  const dx=t.clientX-_TD.x0,dy=t.clientY-_TD.y0;
+  if(!_TD.moved&&Math.hypot(dx,dy)>14){
+    _TD.moved=true;
+    if(!LIB_SELECTED.includes(_TD.photoIdx)){LIB_SELECTED=[_TD.photoIdx];renderLibGrid();}
+    // Build ghost
+    const g=document.createElement('div');
+    g.style.cssText='position:fixed;width:64px;height:64px;border-radius:8px;overflow:hidden;pointer-events:none;z-index:9999;opacity:0.85;border:3px solid var(--gn);box-shadow:0 4px 14px rgba(0,0,0,0.35);';
+    g.innerHTML=`<img src="${LIB_PHOTOS[_TD.photoIdx]}" style="width:100%;height:100%;object-fit:cover;">`;
+    if(LIB_SELECTED.length>1)g.innerHTML+=`<div style="position:absolute;top:-7px;right:-7px;background:var(--gn);color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">${LIB_SELECTED.length}</div>`;
+    document.body.appendChild(g);
+    _TD.ghost=g;
+  }
+  if(_TD.moved&&_TD.ghost){
+    e.preventDefault();
+    _TD.ghost.style.left=(t.clientX-32)+'px';
+    _TD.ghost.style.top=(t.clientY-32)+'px';
+    // Highlight slot under finger
+    _TD.ghost.style.pointerEvents='none';
+    const under=document.elementFromPoint(t.clientX,t.clientY);
+    const slot=under&&under.closest('[data-slotidx]');
+    document.querySelectorAll('[data-slotidx]').forEach(s=>{
+      const over=s===slot;
+      s.style.borderColor=over?'var(--gn)':LIB_SELECTED.length>0?'var(--ac2)':'var(--bor)';
+      s.style.background=over?'var(--gnl)':'var(--sur2)';
+    });
+  }
+},{passive:false});
+
+document.addEventListener('touchend',function(e){
+  if(!_TD)return;
+  const drag=_TD;_TD=null;
+  if(drag.ghost)drag.ghost.remove();
+  document.querySelectorAll('[data-slotidx]').forEach(s=>{s.style.borderColor='';s.style.background='';});
+  if(drag.moved){
+    const t=e.changedTouches[0];
+    const under=document.elementFromPoint(t.clientX,t.clientY);
+    const slot=under&&under.closest('[data-slotidx]');
+    if(slot){
+      const slotIdx=parseInt(slot.dataset.slotidx);
+      if(!LIB_SELECTED.includes(drag.photoIdx))LIB_SELECTED=[drag.photoIdx];
+      assignToSlot(slotIdx);
+    }
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 // Keep openPicker as alias for backwards compat but redirect to lib selection
 function openPicker(slotIdx){
@@ -1875,12 +1970,13 @@ function addItem(){
 function renderBlist(){
   if(!CB){return;}
   const items=CB.items||[];
+  const assigning=LIB_SELECTED.length>0;
   if(!items.length){document.getElementById('blist').innerHTML='<div class="tsm" style="color:var(--tx3);padding:5px 0">No items yet.</div>';return;}
   document.getElementById('blist').innerHTML=items.map((item,idx)=>{
     const analyzed=item.analyzed&&item.brand;
     const hasPhotos=item.photos&&item.photos.length>0;
     const dept=DEPTS[item.dept||'wash'];
-    return`<div style="background:var(--sur2);border:1px solid var(--bor);border-radius:8px;padding:10px;margin-bottom:7px;display:grid;grid-template-columns:50px 1fr auto;gap:8px;align-items:center;">
+    return`<div data-slotidx="${idx}" ondragover="slotDragOver(event,this)" ondragleave="slotDragLeave(event,this)" ondrop="libDropToSlot(event,${idx})" style="background:var(--sur2);border:2px solid ${assigning?'var(--ac2)':'var(--bor)'};border-radius:8px;padding:10px;margin-bottom:7px;display:grid;grid-template-columns:50px 1fr auto;gap:8px;align-items:center;transition:border-color .15s,background .15s;">
       <div style="width:50px;height:50px;border-radius:6px;overflow:hidden;border:1px solid var(--bor);background:var(--sur);display:flex;align-items:center;justify-content:center;font-size:18px;">
         ${hasPhotos?`<img src="${item.photos[0]}" style="width:100%;height:100%;object-fit:cover;">`:'📦'}
       </div>
@@ -1895,11 +1991,12 @@ function renderBlist(){
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;">
-        <button class="btn bb bsm" onclick="openPicker(${idx})">
-          ${hasPhotos?'📷 Change':'📷 Add Photos'}
-        </button>
-        ${hasPhotos&&!analyzed?`<button class="btn bp bsm" onclick="analyzeSlot(${idx})">✨ Analyze</button>`:''}
-        ${analyzed?`<button class="btn bs bsm" onclick="openPicker(${idx})">Re-pick</button>`:''}
+        ${assigning
+          ?`<button class="btn bgn bsm" onclick="assignToSlot(${idx})">← Assign ${LIB_SELECTED.length}</button>`
+          :`<button class="btn bb bsm" onclick="openPicker(${idx})">${hasPhotos?'📷 Change':'📷 Add Photos'}</button>`
+        }
+        ${!assigning&&hasPhotos&&!analyzed?`<button class="btn bp bsm" onclick="analyzeSlot(${idx})">✨ Analyze</button>`:''}
+        ${!assigning&&analyzed?`<button class="btn bs bsm" onclick="openPicker(${idx})">Re-pick</button>`:''}
       </div>
     </div>`;
   }).join('');
