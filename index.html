@@ -310,8 +310,8 @@ tr:hover td{background:var(--bg);}
       <div style="max-width:600px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <div style="color:#fff;font-size:12px;font-weight:600;" id="assign-bar-count">0 photos selected</div>
         <div style="display:flex;gap:7px;">
-          <button class="btn bs bsm" onclick="clearLibSelection()" style="background:rgba(255,255,255,0.2);color:#fff;border:none;">Clear</button>
-          <button class="btn ba" onclick="openItemAssigner()" style="background:#fff;color:var(--ac);font-weight:700;">Assign to Item →</button>
+          <button class="btn bs bsm" onclick="clearLibSelection()" style="background:rgba(255,255,255,0.2);color:#fff;border:none;">✕ Clear</button>
+          <button class="btn ba" onclick="openItemAssigner()" style="background:#fff;color:var(--ac);font-weight:700;">Drop into Item →</button>
         </div>
       </div>
     </div>
@@ -685,80 +685,119 @@ tr:hover td{background:var(--bg);}
 </div>
 
 <div id="emod" class="ov" style="display:none;" onclick="if(event.target===this)closeEdit()">
-  <div class="modal modal-lg">
-    <div class="mtitle">Edit Item</div>
+  <div class="modal modal-lg" style="padding:0;overflow:hidden;display:flex;flex-direction:column;max-height:94vh;">
+    <!-- Profile Header -->
+    <div style="padding:13px 16px 11px;border-bottom:1px solid var(--bor);flex-shrink:0;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
+        <div>
+          <div style="font-family:var(--dp);font-size:14px;color:var(--ac);">Item Profile</div>
+          <div style="font-family:var(--mn);font-size:9px;color:var(--tx3);margin-top:1px;" id="esku-hdr"></div>
+        </div>
+        <button onclick="closeEdit()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--tx2);line-height:1;padding:0;">✕</button>
+      </div>
+      <!-- Photo strip -->
+      <div id="emod-photos" style="display:flex;gap:5px;overflow-x:auto;padding-bottom:2px;min-height:0;"></div>
+      <!-- Stats row -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:10px;">
+        <div style="background:var(--sur2);border-radius:7px;padding:7px 4px;text-align:center;"><div style="font-family:var(--mn);font-size:13px;font-weight:500;" id="estat-cost">—</div><div style="font-size:8.5px;color:var(--tx3);text-transform:uppercase;letter-spacing:.06em;margin-top:1px;">Cost</div></div>
+        <div style="background:var(--sur2);border-radius:7px;padding:7px 4px;text-align:center;"><div style="font-family:var(--mn);font-size:13px;font-weight:500;" id="estat-days">—</div><div style="font-size:8.5px;color:var(--tx3);text-transform:uppercase;letter-spacing:.06em;margin-top:1px;">Days</div></div>
+        <div style="background:var(--sur2);border-radius:7px;padding:7px 4px;text-align:center;"><div style="font-family:var(--mn);font-size:13px;font-weight:500;color:var(--gn);" id="estat-price">—</div><div style="font-size:8.5px;color:var(--tx3);text-transform:uppercase;letter-spacing:.06em;margin-top:1px;">List $</div></div>
+        <div style="background:var(--sur2);border-radius:7px;padding:7px 4px;text-align:center;"><div style="font-family:var(--mn);font-size:13px;font-weight:500;color:var(--am);" id="estat-margin">—</div><div style="font-size:8.5px;color:var(--tx3);text-transform:uppercase;letter-spacing:.06em;margin-top:1px;">Margin</div></div>
+      </div>
+    </div>
     <input type="hidden" id="esku">
-    <!-- TABS -->
-    <div style="display:flex;gap:2px;margin-bottom:14px;border-bottom:1px solid var(--bor);padding-bottom:0;">
-      <button id="etab-info" onclick="switchEditTab('info')" style="padding:6px 14px;border:none;border-bottom:2px solid var(--ac);background:none;font-family:var(--sf);font-size:11.5px;font-weight:600;color:var(--ac);cursor:pointer;">Item Info</button>
-      <button id="etab-plat" onclick="switchEditTab('plat')" style="padding:6px 14px;border:none;border-bottom:2px solid transparent;background:none;font-family:var(--sf);font-size:11.5px;font-weight:500;color:var(--tx2);cursor:pointer;">Platform Listings</button>
+    <!-- Tabs -->
+    <div style="display:flex;border-bottom:1px solid var(--bor);flex-shrink:0;background:var(--sur);">
+      <button id="etab-overview" onclick="switchEditTab('overview')" style="flex:1;padding:9px 4px;border:none;border-bottom:2px solid var(--ac);background:none;font-family:var(--sf);font-size:11px;font-weight:600;color:var(--ac);cursor:pointer;">Overview</button>
+      <button id="etab-details" onclick="switchEditTab('details')" style="flex:1;padding:9px 4px;border:none;border-bottom:2px solid transparent;background:none;font-family:var(--sf);font-size:11px;font-weight:500;color:var(--tx2);cursor:pointer;">Details</button>
+      <button id="etab-listings" onclick="switchEditTab('listings')" style="flex:1;padding:9px 4px;border:none;border-bottom:2px solid transparent;background:none;font-family:var(--sf);font-size:11px;font-weight:500;color:var(--tx2);cursor:pointer;">Listings</button>
     </div>
-    <!-- TAB: ITEM INFO -->
-    <div id="etab-info-panel" style="display:grid;gap:9px;">
-      <div><label>Name / Quick Title</label><input type="text" id="etitle" placeholder="e.g. Netgear Router Bundle or Vintage Levi 501 Jeans 32x34"></div>
-      <div class="g2"><div><label>Brand</label><input type="text" id="ebrand"></div><div><label>Size</label><input type="text" id="esize"></div></div>
-      <div class="g2"><div><label>Color(s)</label><input type="text" id="ecolor"></div><div><label>Condition</label><select id="econd"><option>New with tags</option><option>Like new</option><option>Good used</option><option>Fair</option></select></div></div>
-      <div class="g2"><div><label>Storage Location</label><input type="text" id="estorloc" placeholder="e.g. Bin A3"></div><div><label>List Price ($)</label><input type="number" id="elistprice" step="0.01" placeholder="0.00"></div></div>
-      <div><label>Notes / Measurements</label><textarea id="enotes"></textarea></div>
-      <div class="g2">
-        <div><label>Department</label><select id="edept"><option value="wash">🧺 Needs Wash</option><option value="stain">🧴 Stain Treatment</option><option value="repair">🔧 Needs Repair</option><option value="iron">👔 Needs Ironing</option><option value="ready">✅ Ready to List</option></select></div>
-        <div><label>Status</label><select id="estatus"><option value="draft">Draft Only</option><option value="listed">Listed on Platforms</option></select></div>
+    <!-- Scrollable body -->
+    <div style="overflow-y:auto;flex:1;padding:13px 16px;">
+
+      <!-- OVERVIEW TAB -->
+      <div id="etab-overview-panel" style="display:grid;gap:9px;">
+        <div><label>Name / Title</label><input type="text" id="etitle" placeholder="e.g. Vintage Levi 501 Jeans 32x34 · Netgear Router Bundle"></div>
+        <div class="g3">
+          <div><label>Brand</label><input type="text" id="ebrand" placeholder="Nike, Levi's…"></div>
+          <div><label>Type / Category</label><input type="text" id="etype-display" placeholder="T-Shirt, Jeans, Electronics…"></div>
+          <div><label>Size</label><input type="text" id="esize" placeholder="M, 32x34, OS…"></div>
+        </div>
+        <div class="g2">
+          <div><label>Color(s)</label><input type="text" id="ecolor" placeholder="Black, Faded indigo…"></div>
+          <div><label>Condition</label><select id="econd"><option>New with tags</option><option>Like new</option><option>Good used</option><option>Fair</option></select></div>
+        </div>
+        <div class="g2">
+          <div><label>Dept / Stage</label><select id="edept"><option value="wash">🧺 Needs Wash</option><option value="stain">🧴 Stain Treatment</option><option value="repair">🔧 Needs Repair</option><option value="iron">👔 Needs Ironing</option><option value="ready">✅ Ready to List</option></select></div>
+          <div><label>Storage Loc.</label><input type="text" id="estorloc" placeholder="Bin A3, Shelf 2…"></div>
+        </div>
+        <div class="g2">
+          <div><label>List Price ($)</label><input type="number" id="elistprice" step="0.01" placeholder="0.00"></div>
+          <div><label>Status</label><select id="estatus"><option value="draft">Draft</option><option value="listed">Listed</option></select></div>
+        </div>
+        <div><label>Quick Notes</label><textarea id="enotes" style="min-height:55px;" placeholder="Anything worth noting at a glance…"></textarea></div>
       </div>
-      <div><label>Listed Date</label><input type="date" id="elistdate"></div>
+
+      <!-- DETAILS TAB -->
+      <div id="etab-details-panel" style="display:none;gap:9px;flex-direction:column;">
+        <div class="g2">
+          <div><label>Era / Decade</label><input type="text" id="eera" placeholder="1990s, Y2K, Vintage 70s, 00s…"></div>
+          <div><label>Material / Fabric</label><input type="text" id="ematerial" placeholder="100% Cotton, Poly blend, Wool…"></div>
+        </div>
+        <div><label>Special Attributes &amp; Selling Points</label><textarea id="eattrib" style="min-height:60px;" placeholder="Made in USA · Single stitch · Distressed · Rare colorway · Graphic tee · Licensed band tee · Deadstock…"></textarea></div>
+        <div><label>Measurements</label><textarea id="emeasurements" style="min-height:70px;" placeholder="Chest: 22&quot; · Length: 28&quot; · Shoulders: 18&quot;&#10;Waist: 34&quot; · Inseam: 30&quot; · Rise: 10&quot;"></textarea></div>
+        <div><label>Condition Details / Defects</label><textarea id="edefects" style="min-height:55px;" placeholder="Small faded spot on left sleeve · Pilling on cuffs · All seams intact · No holes or tears…"></textarea></div>
+        <div><label>Authentication / Provenance</label><textarea id="eauth" style="min-height:45px;" placeholder="Original tags intact · Receipt included · Thrifted from Goodwill Atlanta · Estate sale find…"></textarea></div>
+        <div class="g2">
+          <div><label>Listed Date</label><input type="date" id="elistdate"></div>
+          <div><label>Seasonality</label><select id="eseasonality"><option value="year-round">Year-Round</option><option value="winter-only">Winter Only</option><option value="summer-only">Summer Only</option><option value="two-season">Two-Season</option></select></div>
+        </div>
+        <div><label>Evaluation / Strategy Notes</label><textarea id="eseasonnote" style="min-height:55px;" placeholder="Best listed Sep–Nov for fall/winter · Hibernate Dec–Feb · Watch for comp sales above $40…"></textarea></div>
+      </div>
+
+      <!-- LISTINGS TAB -->
+      <div id="etab-listings-panel" style="display:none;">
+        <div style="font-size:10.5px;color:var(--tx2);margin-bottom:10px;">Platform-specific titles, prices, and descriptions. Populated automatically after AI draft generation.</div>
+        <div class="dplat" style="margin-bottom:8px;">
+          <div class="dplatname" style="color:#E53238;">eBay</div>
+          <div style="display:grid;gap:7px;">
+            <div><label>Title <span id="e-ebay-chars" style="font-size:9px;color:var(--tx3);font-weight:400;text-transform:none;letter-spacing:0;">0/80</span></label><input type="text" id="e-ebay-title" maxlength="80" placeholder="eBay title (80 chars)" oninput="updEditChars('ebay')"></div>
+            <div><label>Price ($)</label><input type="number" id="e-ebay-price" step="0.01" placeholder="0.00" style="width:120px;"></div>
+            <div><label>Description</label><textarea id="e-ebay-desc" style="min-height:90px;"></textarea></div>
+          </div>
+        </div>
+        <div class="dplat" style="margin-bottom:8px;">
+          <div class="dplatname" style="color:#CC0033;">Poshmark</div>
+          <div style="display:grid;gap:7px;">
+            <div><label>Title <span id="e-poshmark-chars" style="font-size:9px;color:var(--tx3);font-weight:400;text-transform:none;letter-spacing:0;">0/80</span></label><input type="text" id="e-poshmark-title" maxlength="80" placeholder="Poshmark title (80 chars)" oninput="updEditChars('poshmark')"></div>
+            <div><label>Price ($)</label><input type="number" id="e-poshmark-price" step="0.01" placeholder="0.00" style="width:120px;"></div>
+            <div><label>Description</label><textarea id="e-poshmark-desc" style="min-height:80px;"></textarea></div>
+          </div>
+        </div>
+        <div class="dplat" style="margin-bottom:8px;">
+          <div class="dplatname" style="color:#FF4040;">Depop</div>
+          <div style="display:grid;gap:7px;">
+            <div><label>Title <span id="e-depop-chars" style="font-size:9px;color:var(--tx3);font-weight:400;text-transform:none;letter-spacing:0;">0/60</span></label><input type="text" id="e-depop-title" maxlength="60" placeholder="Depop title (60 chars)" oninput="updEditChars('depop')"></div>
+            <div><label>Price ($)</label><input type="number" id="e-depop-price" step="0.01" placeholder="0.00" style="width:120px;"></div>
+            <div><label>Description</label><textarea id="e-depop-desc" style="min-height:80px;"></textarea></div>
+          </div>
+        </div>
+        <div class="dplat">
+          <div class="dplatname" style="color:#FF4F28;">Mercari</div>
+          <div style="display:grid;gap:7px;">
+            <div><label>Title <span id="e-mercari-chars" style="font-size:9px;color:var(--tx3);font-weight:400;text-transform:none;letter-spacing:0;">0/80</span></label><input type="text" id="e-mercari-title" maxlength="80" placeholder="Mercari title (80 chars)" oninput="updEditChars('mercari')"></div>
+            <div><label>Price ($)</label><input type="number" id="e-mercari-price" step="0.01" placeholder="0.00" style="width:120px;"></div>
+            <div><label>Description</label><textarea id="e-mercari-desc" style="min-height:80px;"></textarea></div>
+          </div>
+        </div>
+      </div>
+
     </div>
-    <!-- TAB: PLATFORM LISTINGS -->
-    <div id="etab-plat-panel" style="display:none;">
-      <div style="font-size:10.5px;color:var(--tx2);margin-bottom:10px;">Edit titles, prices, and descriptions for each platform. Changes saved immediately to your inventory.</div>
-      <!-- eBay -->
-      <div class="dplat" style="margin-bottom:8px;">
-        <div class="dplatname" style="color:#E53238;">eBay</div>
-        <div style="display:grid;gap:7px;">
-          <div>
-            <label>Title <span id="e-ebay-chars" style="font-size:9px;color:var(--tx3);font-weight:400;text-transform:none;letter-spacing:0;">0/80</span></label>
-            <input type="text" id="e-ebay-title" maxlength="80" placeholder="eBay title (80 chars max)" oninput="updEditChars('ebay')">
-          </div>
-          <div><label>Price ($)</label><input type="number" id="e-ebay-price" step="0.01" placeholder="0.00" style="width:120px;"></div>
-          <div><label>Description</label><textarea id="e-ebay-desc" style="min-height:90px;"></textarea></div>
-        </div>
-      </div>
-      <!-- Poshmark -->
-      <div class="dplat" style="margin-bottom:8px;">
-        <div class="dplatname" style="color:#CC0033;">Poshmark</div>
-        <div style="display:grid;gap:7px;">
-          <div>
-            <label>Title <span id="e-poshmark-chars" style="font-size:9px;color:var(--tx3);font-weight:400;text-transform:none;letter-spacing:0;">0/80</span></label>
-            <input type="text" id="e-poshmark-title" maxlength="80" placeholder="Poshmark title (80 chars max)" oninput="updEditChars('poshmark')">
-          </div>
-          <div><label>Price ($)</label><input type="number" id="e-poshmark-price" step="0.01" placeholder="0.00" style="width:120px;"></div>
-          <div><label>Description</label><textarea id="e-poshmark-desc" style="min-height:80px;"></textarea></div>
-        </div>
-      </div>
-      <!-- Depop -->
-      <div class="dplat" style="margin-bottom:8px;">
-        <div class="dplatname" style="color:#FF4040;">Depop</div>
-        <div style="display:grid;gap:7px;">
-          <div>
-            <label>Title <span id="e-depop-chars" style="font-size:9px;color:var(--tx3);font-weight:400;text-transform:none;letter-spacing:0;">0/60</span></label>
-            <input type="text" id="e-depop-title" maxlength="60" placeholder="Depop title (60 chars max)" oninput="updEditChars('depop')">
-          </div>
-          <div><label>Price ($)</label><input type="number" id="e-depop-price" step="0.01" placeholder="0.00" style="width:120px;"></div>
-          <div><label>Description</label><textarea id="e-depop-desc" style="min-height:80px;"></textarea></div>
-        </div>
-      </div>
-      <!-- Mercari -->
-      <div class="dplat">
-        <div class="dplatname" style="color:#FF4F28;">Mercari</div>
-        <div style="display:grid;gap:7px;">
-          <div>
-            <label>Title <span id="e-mercari-chars" style="font-size:9px;color:var(--tx3);font-weight:400;text-transform:none;letter-spacing:0;">0/80</span></label>
-            <input type="text" id="e-mercari-title" maxlength="80" placeholder="Mercari title (80 chars max)" oninput="updEditChars('mercari')">
-          </div>
-          <div><label>Price ($)</label><input type="number" id="e-mercari-price" step="0.01" placeholder="0.00" style="width:120px;"></div>
-          <div><label>Description</label><textarea id="e-mercari-desc" style="min-height:80px;"></textarea></div>
-        </div>
-      </div>
+    <!-- Footer -->
+    <div style="padding:10px 16px;border-top:1px solid var(--bor);flex-shrink:0;display:flex;gap:8px;">
+      <button class="btn bp" onclick="saveEdit()" style="flex:1;">✓ Save Changes</button>
+      <button class="btn bs" onclick="closeEdit()">Cancel</button>
     </div>
-    <div class="fl mt12"><button class="btn bp" onclick="saveEdit()">✓ Save</button><button class="btn bs" onclick="closeEdit()">Cancel</button></div>
   </div>
 </div>
 
@@ -1236,7 +1275,7 @@ function renderLibGrid(){
     const sel=LIB_SELECTED.includes(i);
     // Check if already assigned to an item
     const assignedTo=(CB&&CB.items||[]).findIndex(item=>(item.photos||[]).includes(p));
-    return`<div onclick="toggleLibPhoto(${i})" draggable="true" ondragstart="libDragStart(event,${i})" ontouchstart="libTouchStart(event,${i})" data-libidx="${i}" style="aspect-ratio:1;border-radius:6px;overflow:hidden;position:relative;cursor:pointer;border:2px solid ${sel?'var(--gn)':assignedTo>=0?'var(--am)':'var(--bor)'};transition:border .1s;user-select:none;-webkit-user-select:none;">
+    return`<div onclick="toggleLibPhoto(${i})" draggable="true" ondragstart="libDragStart(event,${i})" data-libidx="${i}" style="aspect-ratio:1;border-radius:6px;overflow:hidden;position:relative;cursor:pointer;border:2px solid ${sel?'var(--gn)':assignedTo>=0?'var(--am)':'var(--bor)'};transition:border .1s;user-select:none;-webkit-user-select:none;">
       <img src="${p}" style="width:100%;height:100%;object-fit:cover;opacity:${sel?1:0.85};">
       ${sel?`<div style="position:absolute;top:2px;right:2px;background:var(--gn);border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;">✓</div>`:''}
       ${assignedTo>=0&&!sel?`<div style="position:absolute;top:2px;right:2px;background:var(--am);border-radius:10px;padding:0 4px;color:#fff;font-size:8px;font-weight:700;">#${assignedTo+1}</div>`:''}
@@ -1340,61 +1379,6 @@ function libDropToSlot(e,slotIdx){
 }
 
 // ── Touch drag: select photos, drag finger to slot ───────────────────────────
-
-let _TD=null; // active touch drag state
-
-function libTouchStart(e,photoIdx){
-  const t=e.touches[0];
-  _TD={photoIdx,x0:t.clientX,y0:t.clientY,moved:false,ghost:null};
-}
-
-document.addEventListener('touchmove',function(e){
-  if(!_TD)return;
-  const t=e.touches[0];
-  const dx=t.clientX-_TD.x0,dy=t.clientY-_TD.y0;
-  if(!_TD.moved&&Math.hypot(dx,dy)>14){
-    _TD.moved=true;
-    if(!LIB_SELECTED.includes(_TD.photoIdx)){LIB_SELECTED=[_TD.photoIdx];renderLibGrid();}
-    // Build ghost
-    const g=document.createElement('div');
-    g.style.cssText='position:fixed;width:64px;height:64px;border-radius:8px;overflow:hidden;pointer-events:none;z-index:9999;opacity:0.85;border:3px solid var(--gn);box-shadow:0 4px 14px rgba(0,0,0,0.35);';
-    g.innerHTML=`<img src="${LIB_PHOTOS[_TD.photoIdx]}" style="width:100%;height:100%;object-fit:cover;">`;
-    if(LIB_SELECTED.length>1)g.innerHTML+=`<div style="position:absolute;top:-7px;right:-7px;background:var(--gn);color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">${LIB_SELECTED.length}</div>`;
-    document.body.appendChild(g);
-    _TD.ghost=g;
-  }
-  if(_TD.moved&&_TD.ghost){
-    e.preventDefault();
-    _TD.ghost.style.left=(t.clientX-32)+'px';
-    _TD.ghost.style.top=(t.clientY-32)+'px';
-    // Highlight slot under finger
-    _TD.ghost.style.pointerEvents='none';
-    const under=document.elementFromPoint(t.clientX,t.clientY);
-    const slot=under&&under.closest('[data-slotidx]');
-    document.querySelectorAll('[data-slotidx]').forEach(s=>{
-      const over=s===slot;
-      s.style.borderColor=over?'var(--gn)':LIB_SELECTED.length>0?'var(--ac2)':'var(--bor)';
-      s.style.background=over?'var(--gnl)':'var(--sur2)';
-    });
-  }
-},{passive:false});
-
-document.addEventListener('touchend',function(e){
-  if(!_TD)return;
-  const drag=_TD;_TD=null;
-  if(drag.ghost)drag.ghost.remove();
-  document.querySelectorAll('[data-slotidx]').forEach(s=>{s.style.borderColor='';s.style.background='';});
-  if(drag.moved){
-    const t=e.changedTouches[0];
-    const under=document.elementFromPoint(t.clientX,t.clientY);
-    const slot=under&&under.closest('[data-slotidx]');
-    if(slot){
-      const slotIdx=parseInt(slot.dataset.slotidx);
-      if(!LIB_SELECTED.includes(drag.photoIdx))LIB_SELECTED=[drag.photoIdx];
-      assignToSlot(slotIdx);
-    }
-  }
-});
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -2311,15 +2295,16 @@ function renderInv(){
 // EDIT MODAL
 // ══════════════════════════════════════════════════════
 function switchEditTab(tab){
-  const isInfo=tab==='info';
-  document.getElementById('etab-info-panel').style.display=isInfo?'grid':'none';
-  document.getElementById('etab-plat-panel').style.display=isInfo?'none':'block';
-  document.getElementById('etab-info').style.borderBottomColor=isInfo?'var(--ac)':'transparent';
-  document.getElementById('etab-info').style.color=isInfo?'var(--ac)':'var(--tx2)';
-  document.getElementById('etab-info').style.fontWeight=isInfo?'600':'500';
-  document.getElementById('etab-plat').style.borderBottomColor=isInfo?'transparent':'var(--ac)';
-  document.getElementById('etab-plat').style.color=isInfo?'var(--tx2)':'var(--ac)';
-  document.getElementById('etab-plat').style.fontWeight=isInfo?'500':'600';
+  const tabs=['overview','details','listings'];
+  const displays={overview:'grid',details:'flex',listings:'block'};
+  tabs.forEach(t=>{
+    const active=t===tab;
+    document.getElementById('etab-'+t+'-panel').style.display=active?displays[t]:'none';
+    const btn=document.getElementById('etab-'+t);
+    btn.style.borderBottomColor=active?'var(--ac)':'transparent';
+    btn.style.color=active?'var(--ac)':'var(--tx2)';
+    btn.style.fontWeight=active?'600':'500';
+  });
 }
 function updEditChars(plat){
   const max=plat==='depop'?60:80;
@@ -2332,19 +2317,43 @@ function updEditChars(plat){
 function openEdit(sku){
   const item=allItems().find(i=>i.sku===sku);if(!item)return;
   document.getElementById('esku').value=sku;
-  // Item info fields
+  document.getElementById('esku-hdr').textContent=sku;
+  // Photos strip
+  const photoEl=document.getElementById('emod-photos');
+  photoEl.innerHTML=(item.photos||[]).slice(0,6).map(p=>`<img src="${p}" style="width:70px;height:70px;object-fit:cover;border-radius:6px;border:1px solid var(--bor);flex-shrink:0;">`).join('')||'<div style="font-size:10px;color:var(--tx3);padding:4px 0;">No photos yet</div>';
+  // Stats
+  const days=item.addedAt?daysAgo(item.addedAt):0;
+  const cost=item.cost||0;
+  const price=item.listPrice||(item.draft?.ebay?.price)||0;
+  const margin=price&&cost?Math.round((price-cost)/price*100):null;
+  document.getElementById('estat-cost').textContent=cost?f$(cost):'—';
+  document.getElementById('estat-days').textContent=days+'d';
+  document.getElementById('estat-price').textContent=price?f$(price):'—';
+  document.getElementById('estat-margin').textContent=margin!==null?margin+'%':'—';
+  document.getElementById('estat-margin').style.color=margin>=40?'var(--gn)':margin>=20?'var(--am)':'var(--rd)';
+  // Overview fields
   document.getElementById('etitle').value=item.title||item.quickTitle||'';
   document.getElementById('ebrand').value=item.brand||'';
+  document.getElementById('etype-display').value=item.typeLabel||item.type||'';
   document.getElementById('esize').value=item.size||'';
   document.getElementById('ecolor').value=item.color||'';
   document.getElementById('econd').value=item.cond||'Good used';
+  document.getElementById('edept').value=item.dept||'wash';
   document.getElementById('estorloc').value=item.storloc||'';
   document.getElementById('elistprice').value=item.listPrice||'';
-  document.getElementById('enotes').value=item.notes||'';
-  document.getElementById('edept').value=item.dept||'wash';
   document.getElementById('estatus').value=item.status||'draft';
+  document.getElementById('enotes').value=item.notes||'';
+  // Details fields
+  document.getElementById('eera').value=item.era||'';
+  document.getElementById('ematerial').value=item.material||'';
+  document.getElementById('eattrib').value=item.attributes||'';
+  document.getElementById('emeasurements').value=item.measurementsFormatted||item.measurements?.formatted||'';
+  document.getElementById('edefects').value=item.defects||'';
+  document.getElementById('eauth').value=item.auth||'';
   document.getElementById('elistdate').value=item.listedAt?item.listedAt.split('T')[0]:'';
-  // Platform listing fields
+  document.getElementById('eseasonality').value=item.seasonality||'year-round';
+  document.getElementById('eseasonnote').value=item.seasonNote||'';
+  // Platform listings
   const d=item.draft||{};
   ['ebay','poshmark','depop','mercari'].forEach(p=>{
     const pd=d[p]||{};
@@ -2356,7 +2365,7 @@ function openEdit(sku){
     if(descEl)descEl.value=pd.description||'';
     updEditChars(p);
   });
-  switchEditTab('info');
+  switchEditTab('overview');
   document.getElementById('emod').style.display='flex';
 }
 function closeEdit(){
@@ -2385,16 +2394,25 @@ function saveEdit(){
   const ebayPrice=parseFloat(document.getElementById('e-ebay-price').value)||null;
   saveItem(sku,{
     title:document.getElementById('etitle').value.trim(),
-    dept:document.getElementById('edept').value||'wash',
     brand:document.getElementById('ebrand').value.trim(),
+    typeLabel:document.getElementById('etype-display').value.trim(),
     size:document.getElementById('esize').value.trim(),
     color:document.getElementById('ecolor').value.trim(),
     cond:document.getElementById('econd').value,
+    dept:document.getElementById('edept').value||'wash',
     storloc:document.getElementById('estorloc').value.trim(),
     listPrice:parseFloat(document.getElementById('elistprice').value)||ebayPrice||null,
-    notes:document.getElementById('enotes').value.trim(),
     status,
+    notes:document.getElementById('enotes').value.trim(),
+    era:document.getElementById('eera').value.trim(),
+    material:document.getElementById('ematerial').value.trim(),
+    attributes:document.getElementById('eattrib').value.trim(),
+    measurementsFormatted:document.getElementById('emeasurements').value.trim(),
+    defects:document.getElementById('edefects').value.trim(),
+    auth:document.getElementById('eauth').value.trim(),
     listedAt:status==='listed'&&listdate?listdate+'T00:00:00.000Z':null,
+    seasonality:document.getElementById('eseasonality').value,
+    seasonNote:document.getElementById('eseasonnote').value.trim(),
     draft:existingDraft
   });
   closeEdit();renderInv();
