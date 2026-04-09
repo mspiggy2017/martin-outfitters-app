@@ -1308,7 +1308,7 @@ function closePicker(){}
 
 async function analyzeSlot(idx){
   const item=CB.items[idx];
-  if(!item||!item.photos||!item.photos.length)return;
+  if(!item||!item.photos||!item.photos.length){flash('Add photos to this item first, then tap Analyze.','a','bflash');return;}
   await analyzeSlotPhotos(idx, item.photos);
   renderBlist();
 }
@@ -1357,7 +1357,7 @@ Return ONLY valid JSON:
     renderBlist();
   }catch(e){
     console.error('Analyze slot error:',e);
-    // Mark as analyzed with defaults so user can move on
+    flash('Analyze failed: '+e.message,'r','bflash');
     CB.items[idx].analyzed=false;
     renderBlist();
   }
